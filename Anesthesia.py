@@ -16,7 +16,7 @@ NORMAL_RANGES = {
     "spo2": (95, 100)  # %
 }
 
-# Define a list of anesthesia drugs with their respective dosages
+# List of anesthesia drugs with their respective dosages
 anesthesia_drugs = [
     {"drug_name": "Propofol", "dosage": "1.5-2.5 mg/kg"},
     {"drug_name": "Etomidate", "dosage": "0.2-0.3 mg/kg"},
