@@ -1,5 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+import csv
+import json
+import os
 
 # Define normal ranges for vital signs
 NORMAL_RANGES = {
@@ -15,132 +18,54 @@ NORMAL_RANGES = {
 
 # Define a list of anesthesia drugs with their respective dosages
 anesthesia_drugs = [
-    # Intravenous Induction Agents
     {"drug_name": "Propofol", "dosage": "1.5-2.5 mg/kg"},
     {"drug_name": "Etomidate", "dosage": "0.2-0.3 mg/kg"},
     {"drug_name": "Thiopental", "dosage": "3-5 mg/kg"},
     {"drug_name": "Ketamine", "dosage": "1-2 mg/kg"},
-
-    # Opioids (Analgesics)
     {"drug_name": "Fentanyl", "dosage": "1-2 mcg/kg"},
     {"drug_name": "Morphine", "dosage": "0.1-0.2 mg/kg"},
     {"drug_name": "Remifentanil", "dosage": "0.05-2 mcg/kg/min (infusion)"},
     {"drug_name": "Sufentanil", "dosage": "0.1-0.4 mcg/kg"},
     {"drug_name": "Hydromorphone", "dosage": "0.015 mg/kg"},
-
-    # Benzodiazepines (Anxiolytics and Amnestics)
     {"drug_name": "Midazolam", "dosage": "0.025-0.1 mg/kg"},
     {"drug_name": "Lorazepam", "dosage": "0.02-0.06 mg/kg"},
     {"drug_name": "Diazepam", "dosage": "0.1-0.2 mg/kg"},
-
-    # Neuromuscular Blocking Agents (Paralytics)
     {"drug_name": "Succinylcholine", "dosage": "1-1.5 mg/kg"},
     {"drug_name": "Rocuronium", "dosage": "0.6-1.2 mg/kg"},
     {"drug_name": "Vecuronium", "dosage": "0.1 mg/kg"},
     {"drug_name": "Cisatracurium", "dosage": "0.1-0.2 mg/kg"},
     {"drug_name": "Atracurium", "dosage": "0.4-0.5 mg/kg"},
-
-    # Reversal Agents
     {"drug_name": "Neostigmine", "dosage": "0.04-0.08 mg/kg (with glycopyrrolate)"},
     {"drug_name": "Sugammadex", "dosage": "2-16 mg/kg (depending on the level of blockade)"},
     {"drug_name": "Flumazenil", "dosage": "0.2 mg (may repeat up to 1 mg)"},
     {"drug_name": "Naloxone", "dosage": "0.04-0.4 mg (titrate to effect)"},
-
-    # Inhalational Anesthetics
     {"drug_name": "Sevoflurane", "dosage": "0.5-3% (inhalational)"},
     {"drug_name": "Isoflurane", "dosage": "0.5-2% (inhalational)"},
     {"drug_name": "Desflurane", "dosage": "3-9% (inhalational)"},
     {"drug_name": "Nitrous Oxide", "dosage": "25-70% (as an adjunct)"},
-
-    # Local Anesthetics
     {"drug_name": "Lidocaine", "dosage": "1-2 mg/kg (max dose without epinephrine: 4 mg/kg, with epinephrine: 7 mg/kg)"},
     {"drug_name": "Bupivacaine", "dosage": "1.5-2.5 mg/kg (max dose: 2.5 mg/kg without epinephrine)"},
     {"drug_name": "Ropivacaine", "dosage": "0.2-0.5 mg/kg (max dose: 3 mg/kg)"},
     {"drug_name": "Mepivacaine", "dosage": "1-2 mg/kg (max dose: 5 mg/kg without epinephrine)"},
-
-    # Sedatives and Hypnotics
     {"drug_name": "Dexmedetomidine", "dosage": "0.2-1 mcg/kg/hr (infusion)"},
     {"drug_name": "Propofol (sedative dose)", "dosage": "25-75 mcg/kg/min (infusion)"}
 ]
 
-def open_table_window():
-    table_window = tk.Toplevel(root)
-    table_window.title("Anesthesia Drugs and Dosages")
-    
-    columns = ("Drug Name", "Dosage")
-    table = ttk.Treeview(table_window, columns=columns, show="headings")
-    table.heading("Drug Name", text="Drug Name")
-    table.heading("Dosage", text="Dosage")
-    
-    for drug in anesthesia_drugs:
-        table.insert("", tk.END, values=(drug["drug_name"], drug["dosage"]))
-    
-    table.pack(fill=tk.BOTH, expand=True)
+patients_list = []
 
-def open_patient_info_window():
-    patient_info_window = tk.Toplevel(root)
-    patient_info_window.title("Enter Patient Information")
+def submit_patient_info():
+    name = name_entry.get()
+    age = age_entry.get()
+    weight = weight_entry.get()
+    height = height_entry.get()
+    bp_systolic = bp_systolic_entry.get()
+    bp_diastolic = bp_diastolic_entry.get()
+    hr = hr_entry.get()
+    rr = rr_entry.get()
+    temp = temp_entry.get()
+    spo2 = spo2_entry.get()
+    asa = asa_entry.get()
     
-    tk.Label(patient_info_window, text="Patient Name:").grid(row=0, column=0, padx=10, pady=5)
-    name_entry = tk.Entry(patient_info_window)
-    name_entry.grid(row=0, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="Age:").grid(row=1, column=0, padx=10, pady=5)
-    age_entry = tk.Entry(patient_info_window)
-    age_entry.grid(row=1, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="Weight (kg):").grid(row=2, column=0, padx=10, pady=5)
-    weight_entry = tk.Entry(patient_info_window)
-    weight_entry.grid(row=2, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="Height (cm):").grid(row=3, column=0, padx=10, pady=5)
-    height_entry = tk.Entry(patient_info_window)
-    height_entry.grid(row=3, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="Blood Pressure Systolic (mmHg):").grid(row=4, column=0, padx=10, pady=5)
-    bp_systolic_entry = tk.Entry(patient_info_window)
-    bp_systolic_entry.grid(row=4, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="Blood Pressure Diastolic (mmHg):").grid(row=5, column=0, padx=10, pady=5)
-    bp_diastolic_entry = tk.Entry(patient_info_window)
-    bp_diastolic_entry.grid(row=5, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="Heart Rate (bpm):").grid(row=6, column=0, padx=10, pady=5)
-    hr_entry = tk.Entry(patient_info_window)
-    hr_entry.grid(row=6, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="Respiratory Rate (breaths/min):").grid(row=7, column=0, padx=10, pady=5)
-    rr_entry = tk.Entry(patient_info_window)
-    rr_entry.grid(row=7, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="Temperature (°C):").grid(row=8, column=0, padx=10, pady=5)
-    temp_entry = tk.Entry(patient_info_window)
-    temp_entry.grid(row=8, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="Oxygen Saturation (%):").grid(row=9, column=0, padx=10, pady=5)
-    spo2_entry = tk.Entry(patient_info_window)
-    spo2_entry.grid(row=9, column=1, padx=10, pady=5)
-    
-    tk.Label(patient_info_window, text="ASA Classification (1-5):").grid(row=10, column=0, padx=10, pady=5)
-    asa_entry = tk.Entry(patient_info_window)
-    asa_entry.grid(row=10, column=1, padx=10, pady=5)
-    
-    submit_button = tk.Button(patient_info_window, text="Submit", command=lambda: submit_patient_info(
-        name_entry.get(),
-        age_entry.get(),
-               weight_entry.get(),
-        height_entry.get(),
-        bp_systolic_entry.get(),
-        bp_diastolic_entry.get(),
-        hr_entry.get(),
-        rr_entry.get(),
-        temp_entry.get(),
-        spo2_entry.get(),
-        asa_entry.get()
-    ))
-    submit_button.grid(row=11, columnspan=2, pady=20)
-
-def submit_patient_info(name, age, weight, height, bp_systolic, bp_diastolic, hr, rr, temp, spo2, asa):
     # Validate ASA Classification
     try:
         asa = int(asa)
@@ -208,81 +133,213 @@ def submit_patient_info(name, age, weight, height, bp_systolic, bp_diastolic, hr
         abnormalities.append("Oxygen Saturation must be a number.")
     
     if abnormalities:
-        messagebox.showwarning("Abnormal Values", "\n".join(abnormalities))
-    else:
-        messagebox.showinfo("Patient Information", "Patient information submitted successfully.")
-
-def open_procedure_entry_window():
-    procedure_window = tk.Toplevel(root)
-    procedure_window.title("Enter Procedure Information")
+        messagebox.showwarning("Patient Information Warning", "\n".join(abnormalities))
     
-    tk.Label(procedure_window, text="Procedure Name:").grid(row=0, column=0, padx=10, pady=5)
-    procedure_name_entry = tk.Entry(procedure_window)
+    # Store patient data
+    patient_record = {
+        "name": name,
+        "age": age,
+        "weight": weight,
+        "height": height,
+        "bp_systolic": bp_systolic,
+        "bp_diastolic": bp_diastolic,
+        "hr": hr,
+        "rr": rr,
+        "temp": temp,
+        "spo2": spo2,
+        "asa": asa,
+        "abnormalities": abnormalities
+    }
+    
+    patients_list.append(patient_record)
+    save_patient_data()
+    messagebox.showinfo("Success", "Patient information submitted successfully.")
+    update_patient_list()
+
+def submit_procedure_info():
+    procedure_name = procedure_name_entry.get()
+    
+    if not patients_list:
+        messagebox.showerror("Data Error", "Please enter patient information first.")
+        return
+    
+    # Example of how patient data can influence procedure planning
+    if len(patients_list) > 0 and patients_list[-1]["asa"] > 2:
+        messagebox.showwarning("Risk Warning", f"Patient ASA classification is {patients_list[-1]['asa']}. This patient might be at higher risk for the procedure: {procedure_name}.")
+    else:
+        messagebox.showinfo("Procedure Info", f"Procedure {procedure_name} can be performed with standard anesthesia protocols.")
+
+def search_patients():
+    query = search_entry.get()
+    search_results.delete(*search_results.get_children())
+    for patient in patients_list:
+        if query.lower() in patient["name"].lower():
+            search_results.insert("", tk.END, values=(
+                patient["name"],
+                patient["age"],
+                patient["weight"],
+                patient["height"],
+                patient["bp_systolic"],
+                patient["bp_diastolic"],
+                patient["hr"],
+                patient["rr"],
+                patient["temp"],
+                patient["spo2"],
+                patient["asa"]
+            ))
+
+def update_patient_list():
+    search_results.delete(*search_results.get_children())
+    for patient in patients_list:
+        search_results.insert("", tk.END, values=(
+            patient["name"],
+            patient["age"],
+            patient["weight"],
+            patient["height"],
+            patient["bp_systolic"],
+            patient["bp_diastolic"],
+            patient["hr"],
+            patient["rr"],
+            patient["temp"],
+            patient["spo2"],
+            patient["asa"]
+        ))
+
+def save_patient_data():
+    if not os.path.exists('patient_data'):
+        os.makedirs('patient_data')
+
+    with open('patient_data/patients_data.json', 'w') as file:
+        json.dump(patients_list, file, indent=4)
+
+def open_patient_info_tab():
+    for widget in patient_info_frame.winfo_children():
+        widget.destroy()
+    
+    tk.Label(patient_info_frame, text="Patient Name:").grid(row=0, column=0, padx=10, pady=5)
+    global name_entry
+    name_entry = tk.Entry(patient_info_frame)
+    name_entry.grid(row=0, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="Age:").grid(row=1, column=0, padx=10, pady=5)
+    global age_entry
+    age_entry = tk.Entry(patient_info_frame)
+    age_entry.grid(row=1, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="Weight (kg):").grid(row=2, column=0, padx=10, pady=5)
+    global weight_entry
+    weight_entry = tk.Entry(patient_info_frame)
+    weight_entry.grid(row=2, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="Height (cm):").grid(row=3, column=0, padx=10, pady=5)
+    global height_entry
+    height_entry = tk.Entry(patient_info_frame)
+    height_entry.grid(row=3, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="Blood Pressure Systolic (mmHg):").grid(row=4, column=0, padx=10, pady=5)
+    global bp_systolic_entry
+    bp_systolic_entry = tk.Entry(patient_info_frame)
+    bp_systolic_entry.grid(row=4, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="Blood Pressure Diastolic (mmHg):").grid(row=5, column=0, padx=10, pady=5)
+    global bp_diastolic_entry
+    bp_diastolic_entry = tk.Entry(patient_info_frame)
+    bp_diastolic_entry.grid(row=5, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="Heart Rate (bpm):").grid(row=6, column=0, padx=10, pady=5)
+    global hr_entry
+    hr_entry = tk.Entry(patient_info_frame)
+    hr_entry.grid(row=6, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="Respiratory Rate (breaths/min):").grid(row=7, column=0, padx=10, pady=5)
+    global rr_entry
+    rr_entry = tk.Entry(patient_info_frame)
+    rr_entry.grid(row=7, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="Temperature (°C):").grid(row=8, column=0, padx=10, pady=5)
+    global temp_entry
+    temp_entry = tk.Entry(patient_info_frame)
+    temp_entry.grid(row=8, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="Oxygen Saturation (%):").grid(row=9, column=0, padx=10, pady=5)
+    global spo2_entry
+    spo2_entry = tk.Entry(patient_info_frame)
+    spo2_entry.grid(row=9, column=1, padx=10, pady=5)
+    
+    tk.Label(patient_info_frame, text="ASA Classification (1-5):").grid(row=10, column=0, padx=10, pady=5)
+    global asa_entry
+    asa_entry = tk.Entry(patient_info_frame)
+    asa_entry.grid(row=10, column=1, padx=10, pady=5)
+    
+    submit_button = tk.Button(patient_info_frame, text="Submit", command=submit_patient_info)
+    submit_button.grid(row=11, columnspan=2, pady=20)
+    
+    # Add Search Widgets
+    tk.Label(patient_info_frame, text="Search Patient Data:").grid(row=12, column=0, padx=10, pady=5)
+    global search_entry
+    search_entry = tk.Entry(patient_info_frame)
+    search_entry.grid(row=12, column=1, padx=10, pady=5)
+    
+    search_button = tk.Button(patient_info_frame, text="Search", command=search_patients)
+    search_button.grid(row=12, column=2, padx=10, pady=5)
+    
+    # Patient List Treeview
+    columns = ("Name", "Age", "Weight (kg)", "Height (cm)", "BP Systolic (mmHg)", "BP Diastolic (mmHg)", "Heart Rate (bpm)", "Respiratory Rate (breaths/min)", "Temperature (°C)", "Oxygen Saturation (%)", "ASA Classification")
+    global search_results
+    search_results = ttk.Treeview(patient_info_frame, columns=columns, show="headings")
+    for col in columns:
+        search_results.heading(col, text=col)
+    search_results.grid(row=13, column=0, columnspan=3, padx=10, pady=5, sticky="nsew")
+    
+    update_patient_list()
+
+def open_procedure_info_tab():
+    for widget in procedure_info_frame.winfo_children():
+        widget.destroy()
+    
+    tk.Label(procedure_info_frame, text="Procedure Name:").grid(row=0, column=0, padx=10, pady=5)
+    global procedure_name_entry
+    procedure_name_entry = tk.Entry(procedure_info_frame)
     procedure_name_entry.grid(row=0, column=1, padx=10, pady=5)
     
-    tk.Label(procedure_window, text="ASA Classification (1-5):").grid(row=1, column=0, padx=10, pady=5)
-    asa_entry = tk.Entry(procedure_window)
-    asa_entry.grid(row=1, column=1, padx=10, pady=5)
+    submit_button = tk.Button(procedure_info_frame, text="Submit", command=submit_procedure_info)
+    submit_button.grid(row=1, columnspan=2, pady=20)
+
+def open_anesthesia_drugs_tab():
+    for widget in anesthesia_drugs_frame.winfo_children():
+        widget.destroy()
     
-    submit_button = tk.Button(procedure_window, text="Submit", command=lambda: submit_procedure_info(
-        procedure_name_entry.get(),
-        asa_entry.get()
-    ))
-    submit_button.grid(row=2, columnspan=2, pady=20)
+    columns = ("Drug Name", "Dosage")
+    table = ttk.Treeview(anesthesia_drugs_frame, columns=columns, show="headings")
+    table.heading("Drug Name", text="Drug Name")
+    table.heading("Dosage", text="Dosage")
+    
+    for drug in anesthesia_drugs:
+        table.insert("", tk.END, values=(drug["drug_name"], drug["dosage"]))
+    
+    table.pack(fill=tk.BOTH, expand=True)
 
-def submit_procedure_info(procedure_name, asa):
-    try:
-        asa = int(asa)
-    except ValueError:
-        messagebox.showerror("Input Error", "Please enter a valid ASA classification.")
-        return
-
-    if asa < 1 or asa > 5:
-        messagebox.showerror("ASA Classification Error", "ASA classification must be between 1 and 5.")
-        return
-
-    if asa in (1, 2):
-        risk_level = "Low Risk"
-    elif asa in (3, 4):
-        risk_level = "Moderate Risk"
-    else:
-        risk_level = "High Risk"
-
-    # Generate anesthetic plan based on ASA classification
-    plan = ""
-    if asa == 1:
-        plan = "General anesthesia with minimal monitoring."
-    elif asa == 2:
-        plan = "General anesthesia with standard monitoring."
-    elif asa == 3:
-        plan = "Regional or general anesthesia with close monitoring."
-    elif asa == 4:
-        plan = "Intensive monitoring and possible additional resources."
-    elif asa == 5:
-        plan = "Advanced preparation and possible additional support required."
-
-    messagebox.showinfo("Procedure Details", f"Procedure Name: {procedure_name}\nRisk Level: {risk_level}\nAnesthetic Plan: {plan}")
-
-# Main application window (landing page)
+# Main application window
 root = tk.Tk()
-root.title("Anesthesia App")
+root.title("Anesthesia Management System")
 
-# Create a label for the landing page
-welcome_label = tk.Label(root, text="Welcome to the Anesthesia App", font=("Arial", 24))
-welcome_label.pack(pady=20)
+# Create a Notebook (tabbed interface)
+notebook = ttk.Notebook(root)
 
-# Create a button to open the table window
-open_table_button = tk.Button(root, text="View Anesthesia Drugs and Dosages", font=("Arial", 16), command=open_table_window)
-open_table_button.pack(pady=20)
+# Create frames for each tab
+patient_info_frame = ttk.Frame(notebook)
+procedure_info_frame = ttk.Frame(notebook)
+anesthesia_drugs_frame = ttk.Frame(notebook)
 
-# Create a button to open the patient info window
-open_patient_info_button = tk.Button(root, text="Enter Patient Information", font=("Arial", 16), command=open_patient_info_window)
-open_patient_info_button.pack(pady=20)
+# Add frames to the notebook
+notebook.add(patient_info_frame, text="Patient Information")
+notebook.add(procedure_info_frame, text="Procedure Information")
+notebook.add(anesthesia_drugs_frame, text="Anesthesia Drugs and Dosages")
+notebook.pack(expand=1, fill="both")
 
-# Create a button to open the procedure entry window
-open_procedure_button = tk.Button(root, text="Enter Procedure Information", font=("Arial", 16), command=open_procedure_entry_window)
-open_procedure_button.pack(pady=20)
+# Open tabs
+open_patient_info_tab()
+open_procedure_info_tab()
+open_anesthesia_drugs_tab()
 
-# Start the main event loop
 root.mainloop()
-
